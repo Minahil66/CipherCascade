@@ -87,6 +87,13 @@ class SimpleBlockCipher:public Ciphers{
             }
             }
 };
-int main(){
+class ROT13Cipher:public Ciphers{}
 
+class Vignere:public Ciphers{}
+
+class Xor:public Ciphers{}
+
+int main(){
+//switch case
 }
+
