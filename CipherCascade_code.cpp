@@ -4,7 +4,6 @@
 #include<fstream>
 #include<string>
 #include<cstdlib>
-#include <cctype>
 using namespace std;
 class Ciphers{
     private:
@@ -15,11 +14,11 @@ class Ciphers{
     public:
     virtual void encrypt()=0;
     virtual void decrypt()=0;
-    virtual void bruteforce()=0;
-    Ciphers(string name):filename(name){ //enter name/path
-        ifstream file(name, ios::binary);
+   // virtual void bruteforce()=0;
+    Ciphers(string n):filename(n){ //enter name/path
+        ifstream file(n, ios::binary);
         if(!file.is_open()){
-            cout<<"Error: File failed to open"<<name<<endl;
+            cout<<"Error: File failed to open"<<n<<endl;
             exit(1);
             }
             file.seekg(0, ios::end); //put the cursor in the end of the file and DO NOT MOV any positions
@@ -27,7 +26,7 @@ class Ciphers{
             file.seekg(0,ios::beg); //okay size done, now put the cursor back to the beginning
             holder.resize(size); //changing the size of our vector
             if(file.fail()){
-            cout << "Error: Failed to read file " << name << endl;
+            cout << "Error: Failed to read file " << n << endl;
             exit(1);
             }
             file.read(holder.data(), size); //data() is a raw pointer to the place/mem where vector is storing elements, so file.read(where to put data (expects a pointer), how many bytes to read(int));
@@ -41,9 +40,10 @@ class Ciphers{
 };
 class SimpleBlockCipher:public Ciphers{
     private:
-    vector <vector<int>> blocks;
+    vector <vector<unsigned char>> blocks;
     int groups;
     int key;
+    unsigned char invsBox[256];
     unsigned char sBox[256] = {
         0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0xd7,0xab,0x76, //premade AES style substitution box, also called sbox, an important concept in crytography
         0xca,0x82,0xc9,0x7d,0xfa,0x59,0x47,0xf0,0xad,0xd4,0xa2,0xaf,0x9c,0xa4,0x72,0xc0,
@@ -62,19 +62,27 @@ class SimpleBlockCipher:public Ciphers{
         0xe1,0xf8,0x98,0x11,0x69,0xd9,0x8e,0x94,0x9b,0x1e,0x87,0xe9,0xce,0x55,0x28,0xdf,
         0x8c,0xa1,0x89,0x0d,0xbf,0xe6,0x42,0x68,0x41,0x99,0x2d,0x0f,0xb0,0x54,0xbb,0x16
     };
-    
     public:
     SimpleBlockCipher(string n, int k=1):Ciphers(n){
         key=k;
+        geninv();
+    }
+    void setKey(int num){
+        key=num;
+    }
+    void geninv(){
+    for(int i=0;i<256;i++){
+    invsBox[sBox[i]] = i;
+    }
     }
     void encrypt() override{
         //block formation:
         int s=holder.size();
         int groups=(s+16-1)/16;
         for(int i=0;i<groups;i++){
-            vector<int> block;
+            vector<unsigned char> block;
             int start=i*16;
-            int end=(16+start,holder.size());
+            int end=min(16+start,(int)holder.size());
             for(int j=start;j<end;j++){
                 block.push_back(holder[j]);
             }
@@ -82,12 +90,99 @@ class SimpleBlockCipher:public Ciphers{
         }
         //substitution
         for(int i=0;i<blocks.size();i++){
-            for(int j:blocks[i].size()){
+        for(int j=0;j<blocks[i].size();j++){
             blocks[i][j]=sBox[(unsigned char)blocks[i][j]];
+            }}
+        //shift the last to front 
+        for(auto& block:blocks){
+        if(block.size()==16){
+            int last=block[15];
+            block.pop_back();
+            for(int i=15;i>0;i--){
+                block[i]=block[i-1];
             }
+            block[0]=last;
             }
+        }
+        //Xor with key
+        for(int i=0;i<blocks.size();i++){
+        for(int j=0;j<blocks[i].size();j++){
+            blocks[i][j]^=key;
+        }
+        }
+        //combine back in a file
+        int p=0;
+        for(auto& block:blocks){
+        for(auto& i:block){
+        holder[p++]=i;
+        }
+        }
+        ofstream outfile("EncryptedVer.bin", ios::binary);
+        outfile.write(holder.data(), holder.size());
+        outfile.close();
+        cout<<"Encrypted file saved as EncryptedVer.bin"<<endl;
+        }
+
+        void decrypt() override{
+        ifstream infile("EncryptedVer.bin", ios::binary);
+        if(!infile.is_open()){
+            cout<<"Error: cannot open encrypted file"<<endl;
+        return;
+    }
+        infile.seekg(0, ios::end);
+        size=infile.tellg();
+        infile.seekg(0,ios::beg);
+        holder.resize(size);
+        infile.read(holder.data(), size);
+        infile.close(); 
+        blocks.clear();
+        int s=holder.size();
+        int groups=(s+16-1)/16;
+        for(int i=0;i<groups;i++){
+            vector<unsigned char> block;
+            int start=i*16;
+            int end=min(16+start,(int)holder.size());
+            for(int j=start;j<end;j++){
+                block.push_back(holder[j]);
             }
+            blocks.push_back(block); 
+        }
+
+        //xor back
+        for(int i=0;i<blocks.size();i++){
+        for(int j=0;j<blocks[i].size();j++){
+        blocks[i][j]^=key;
+        }
+        }
+        //shift back the last element that we moved to front
+        for(auto& block:blocks){
+        if(block.size()==16){
+        unsigned char first=block[0];
+        for(int i=0;i<15;i++){
+        block[i]=block[i+1];
+        }
+        block[15]=first;
+        }
+        }
+        //substitute back oms
+        for(int i=0;i<blocks.size();i++){
+        for(int j=0;j<blocks[i].size();j++){
+        blocks[i][j]=invsBox[(unsigned char)blocks[i][j]];
+        }
+        }
+        int po=0;
+        for(auto& block:blocks){
+        for(auto& i:block){
+        holder[po++]=i;
+        }
+        }
+        ofstream outfile("DecryptedVer.bin", ios::binary);
+        outfile.write(holder.data(), holder.size());
+        outfile.close();
+        cout<<"Decrypted file saved as DecryptedVer.bin"<<endl;
+        }
 };
+
 class ROT13Cipher:public Ciphers{};
 
 class Vignere:public Ciphers{
@@ -147,6 +242,7 @@ class Xor:public Ciphers{};
 int main(){
 //switch case
 }
+
 
 
 
