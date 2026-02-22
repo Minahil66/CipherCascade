@@ -87,13 +87,14 @@ class SimpleBlockCipher:public Ciphers{
             }
             }
 };
-class ROT13Cipher:public Ciphers{}
+class ROT13Cipher:public Ciphers{};
 
-class Vignere:public Ciphers{}
+class Vignere:public Ciphers{};
 
-class Xor:public Ciphers{}
+class Xor:public Ciphers{};
 
 int main(){
 //switch case
 }
+
 
