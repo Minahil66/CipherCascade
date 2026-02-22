@@ -185,7 +185,7 @@ class SimpleBlockCipher:public Ciphers{
 
 class ROT13Cipher:public Ciphers{};
 
-class Vignere:public Ciphers{
+class Vigenere:public Ciphers{
 string CipherText;
 string OriginalText;
     public:
@@ -261,8 +261,63 @@ string encrypt() {
 }
     };
 int main(){
-//switch case
+        int choice, c;
+    cout << "Choose Cipher :\n";
+    cout << "1. ";
+    cout << "2. ";
+    cout << "3. Vigenere Cipher \n";
+    cout << "4. XOR Cipher \n";
+    cout << "Enter choice: ";
+    cin >> choice;
+      switch(choice) {
+        case 3: {
+            string text, key;
+            cout << "Enter text:\n ";
+            getline(cin, text);
+            cout << "\nEnter key: ";
+            getline(cin, key);
+
+            Vigenere v(text, key);
+
+  
+            cout << "\nChoose : \n1. Encrypt\n2. Decrypt\n ";
+            cin >> c;
+
+            if(c == 1) {
+                cout << "Encrypted version : " << v.encrypt() << endl;
+            } else if(c == 2) {
+                cout << "Decrypted version : " << v.decrypt()<< endl;
+            } else
+                cout << "Invalid input" << endl;
+            break;
+        }
+
+        case 4: {
+            string text;
+            int key;
+            cout << "Enter text: ";
+            getline(cin, text);
+            cout << "\nEnter key : ";
+            cin >> key;
+
+            XORCipher xor(text, key);
+
+            cout << "\nChoose :\n1. Encrypt\n2. Decrypt\n ";
+            cin >>c;
+
+            if(c == 1) {
+                
+                cout << "Encrypted version : " << xor.encrypt() << endl;
+            } else if(c == 2) {
+              
+                cout << "Decrypted version : " << xor.decrypt() << endl;
+            } else
+                cout << "Invalid input" << endl;
+            break;
+        } }
+    return 0;
 }
+
 
 
 
