@@ -4,6 +4,7 @@
 #include<fstream>
 #include<string>
 #include<cstdlib>
+#include <cctype>
 using namespace std;
 class Ciphers{
     private:
@@ -146,6 +147,7 @@ class Xor:public Ciphers{};
 int main(){
 //switch case
 }
+
 
 
 
