@@ -89,12 +89,63 @@ class SimpleBlockCipher:public Ciphers{
 };
 class ROT13Cipher:public Ciphers{};
 
-class Vignere:public Ciphers{};
+class Vignere:public Ciphers{
+string CipherText;
+    public:
+    Vigenere(string T, string K){
+       text = T;
+         key = K;
+        
+    //    int tl = text.length(); 
+        int kl = key.length();
+
+        for(int i=0;i<text.length();i++) //uppercase text
+            text[i] = toupper(text[i]);
+       
+        for(int i=0;i<key.length();i++) //uppercase key
+            key[i] = toupper(key[i]);
+
+    }
+
+    string encrypt(){
+        CipherText = "";
+    
+        for(int i=0;i<text.length();i++){
+        char t = text[i];
+        char k = key[i % key.length()];    
+        
+    int tValue =  t - 'A';
+    int kValue =  k - 'A';
+    int mod = ((tValue + kValue)%26);
+    int c = mod + 'A';
+    CipherText += c;
+     }
+     return CipherText;
+}
+
+        string decrypt(){
+        string OriginalText = "";
+    
+        for(int i=0;i<CipherText.length();i++){
+        char c = CipherText[i];
+        char k = key[i % key.length()];    
+        
+    int cValue =  c - 'A';
+    int kValue =  k - 'A';
+    int mod = ((cValue - kValue + 26)%26);
+    int r = mod + 'A';
+    OriginalText += r;
+     }
+     return OriginalText;
+}
+    
+};
 
 class Xor:public Ciphers{};
 
 int main(){
 //switch case
 }
+
 
 
