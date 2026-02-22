@@ -187,22 +187,17 @@ class ROT13Cipher:public Ciphers{};
 
 class Vignere:public Ciphers{
 string CipherText;
+string OriginalText;
     public:
     Vigenere(string T, string K){
        text = T;
          key = K;
-        
-    //    int tl = text.length(); 
-        int kl = key.length();
-
         for(int i=0;i<text.length();i++) //uppercase text
             text[i] = toupper(text[i]);
        
         for(int i=0;i<key.length();i++) //uppercase key
             key[i] = toupper(key[i]);
-
     }
-
     string encrypt(){
         CipherText = "";
     
@@ -233,15 +228,42 @@ string CipherText;
     OriginalText += r;
      }
      return OriginalText;
-}
-    
+}    
 };
+class XORCipher : public Ciphers{
+    string CipherText;
+    string OriginalText;
+    int key;
+public:
+ XORCipher(string T, int K)
+{
+       text = T;
+       key = K;
+    }
+string encrypt() {
+         CipherText = "";
 
-class Xor:public Ciphers{};
+        for (int i = 0; i < text.length(); i++) {
+            char c = text[i]^key;
+            CipherText +=c;
+        }
+        return CipherText;
+    } 
+    string decrypt() {
+ OriginalText = ""; 
+        for (int i = 0; i < CipherText.length(); i++) {
+            char c = CipherText[i] ^ key;
+            OriginalText += c;
+        }
 
+        return OriginalText;
+   
+}
+    };
 int main(){
 //switch case
 }
+
 
 
 
