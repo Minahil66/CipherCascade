@@ -2,6 +2,7 @@
 #include<iostream>
 #include<vector>
 #include<fstream>
+#include <cctype>
 #include<string>
 #include<cstdlib>
 #include<algorithm>
@@ -183,127 +184,70 @@ public:
         reverse(holder.begin(), holder.end());  // Reverse back
     }
 };
-class Vigenere:public Ciphers{
-string CipherText;
-string OriginalText;
-    public:
-    Vigenere(string T, string K){
-       text = T;
-         key = K;
-        for(int i=0;i<text.length();i++) //uppercase text
-            text[i] = toupper(text[i]);
-       
-        for(int i=0;i<key.length();i++) //uppercase key
+class Vigenere : public Ciphers {
+    string key;
+public:
+    Vigenere(string n, string k) : Ciphers(n) {
+        key = k;
+        for (int i = 0; i < key.length(); i++)
             key[i] = toupper(key[i]);
     }
-    string encrypt(){
-        CipherText = "";
-    
-        for(int i=0;i<text.length();i++){
-        char t = text[i];
-        char k = key[i % key.length()];    
-        
-    int tValue =  t - 'A';
-    int kValue =  k - 'A';
-    int mod = ((tValue + kValue)%26);
-    int c = mod + 'A';
-    CipherText += c;
-     }
-     return CipherText;
-}
 
-        string decrypt(){
-        string OriginalText = "";
-    
-        for(int i=0;i<CipherText.length();i++){
-        char c = CipherText[i];
-        char k = key[i % key.length()];    
-        
-    int cValue =  c - 'A';
-    int kValue =  k - 'A';
-    int mod = ((cValue - kValue + 26)%26);
-    int r = mod + 'A';
-    OriginalText += r;
-     }
-     return OriginalText;
-}    
-};
-class XORCipher : public Ciphers{
-    string CipherText;
-    string OriginalText;
-     int key;
-public:
- XORCipher(string T, int K)
-{
-       text = T;
-       key = K;
+    void encrypt() override {
+        for (int i = 0; i < holder.size(); i++) {
+            char c = holder[i];
+
+            if (isalpha(c)) {
+                char upperC = toupper(c);
+                char k = key[i % key.length()];
+
+                int tValue = upperC - 'A';
+                int kValue = k - 'A';
+
+                holder[i] = ((tValue + kValue) % 26) + 'A';
+            }
+        }
     }
-string encrypt() {
-         CipherText = "";
 
-        for (int i = 0; i < text.length(); i++) {
-            char c = text[i]^key;
-            CipherText +=c;
+    void decrypt() override {
+        for (int i = 0; i < holder.size(); i++) {
+            char c = holder[i];
+
+            if (isalpha(c)) {
+                char upperC = toupper(c);
+                char k = key[i % key.length()];
+
+                int cValue = upperC - 'A';
+                int kValue = k - 'A';
+
+                holder[i] = ((cValue - kValue + 26) % 26) + 'A';
+            }
         }
-        return CipherText;
-    } 
-    string decrypt() {
- OriginalText = ""; 
-        for (int i = 0; i < CipherText.length(); i++) {
-            char c = CipherText[i] ^ key;
-            OriginalText += c;
+    }
+};
+class XORCipher : public Ciphers {
+private:
+    int key;
+
+public:
+    XORCipher(string n, int k) : Ciphers(n) {
+        key = k;
+    }
+
+    void encrypt() override {
+        for (int i = 0; i < holder.size(); i++) {
+            holder[i] = holder[i] ^ key;
         }
-        return OriginalText;
-}
-    };
+    }
+
+    void decrypt() override {
+        for (int i = 0; i < holder.size(); i++) {
+            holder[i] = holder[i] ^ key;   // XOR reverses itself
+        }
+    }
+};
 int main(){
-        int choice, c;
-    cout << "Choose any 3 Ciphers :\n";
-    cout << "1. Simple Block Cipher ";
-    cout << "2. Byte Reversal";
-    cout << "3. Vigenere Cipher \n";
-    cout << "4. XOR Cipher \n";
-    cout << "Enter choice: ";
-    cin >> choice;
-      switch(choice) {
-        case 3: {
-            string text, key;
-            cout << "Enter text:\n ";
-            getline(cin, text);
-            cout << "\nEnter key: ";
-            getline(cin, key);
 
-            Vigenere v(text, key);
-
-            cout << "\nChoose : \n1. Encrypt\n2. Decrypt\n ";
-            cin >> c;
-
-            if(c == 1) {
-                cout << "Encrypted version : " << v.encrypt() << endl;
-            } else if(c == 2) {
-                cout << "Decrypted version : " << v.decrypt()<< endl;
-            } else
-                cout << "Invalid input" << endl;
-            break;
-        }
-
-        case 4: {
-            string text;
-            int key;
-            cout << "Enter text: ";
-            getline(cin, text);
-            cout << "\nEnter key : ";
-            cin >> key;
-            XORCipher xor(text, key);
-            cout << "\nChoose :\n1. Encrypt\n2. Decrypt\n ";
-            cin >>c;
-            if(c == 1) {
-                cout << "Encrypted version : " << xor.encrypt() << endl;
-            } else if(c == 2) {
-                cout << "Decrypted version : " << xor.decrypt() << endl;
-            } else
-                cout << "Invalid input" << endl;
-            break;
-        } }
     return 0;
 }
+
