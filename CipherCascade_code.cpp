@@ -4,23 +4,37 @@
 #include<fstream>
 #include<string>
 #include<cstdlib>
+#include<algorithm>
 using namespace std;
 class Ciphers{
     private:
     string filename;
     protected:
-    vector<char> holder;
+    vector<char> holder; 
     int size;
     public:
     virtual void encrypt()=0;
     virtual void decrypt()=0;
+    void saveEncrypted(){
+        ofstream outfile("EncryptedVer.enc", ios::binary);
+        outfile.write(holder.data(), holder.size());
+        outfile.close();
+        cout<<"Encrypted file saved as EncryptedVer.enc"<<endl;
+        }
+    void saveDecrypted(){
+        ofstream outfile("DecryptedVer", ios::binary);
+        outfile.write(holder.data(), holder.size());
+        outfile.close();
+        cout<<"Decrypted file saved as DecryptedVer"<<endl;
+
+    }
    // virtual void bruteforce()=0;
     Ciphers(string n):filename(n){ //enter name/path
         ifstream file(n, ios::binary);
         if(!file.is_open()){
             cout<<"Error: File failed to open"<<n<<endl;
             exit(1);
-            }
+        }
             file.seekg(0, ios::end); //put the cursor in the end of the file and DO NOT MOV any positions
             size=file.tellg(); //snce file is already in binary, tell us the size
             file.seekg(0,ios::beg); //okay size done, now put the cursor back to the beginning
@@ -28,24 +42,24 @@ class Ciphers{
             if(file.fail()){
             cout << "Error: Failed to read file " << n << endl;
             exit(1);
-            }
+        }
             file.read(holder.data(), size); //data() is a raw pointer to the place/mem where vector is storing elements, so file.read(where to put data (expects a pointer), how many bytes to read(int));
             file.close(); //close the file
             cout<<"Successfully read "<<size<<" bytes into memory"<<endl;
     }
-    string getFilename()const{
-        return filename;
-    }
+    string getFilename()const{ return filename;}
+    int getsize()const{return size;}
     virtual ~Ciphers(){}
 };
+
 class SimpleBlockCipher:public Ciphers{
     private:
-    vector <vector<unsigned char>> blocks;
+    vector <vector<unsigned char>> blocks; //vector of vectors
     int groups;
     int key;
     unsigned char invsBox[256];
     unsigned char sBox[256] = {
-        0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0xd7,0xab,0x76, //premade AES style substitution box, also called sbox, an important concept in crytography
+        0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0xd7,0xab,0x76, //premade AES style substitution box available online, also called sbox, an important concept in crytography, 
         0xca,0x82,0xc9,0x7d,0xfa,0x59,0x47,0xf0,0xad,0xd4,0xa2,0xaf,0x9c,0xa4,0x72,0xc0,
         0xb7,0xfd,0x93,0x26,0x36,0x3f,0xf7,0xcc,0x34,0xa5,0xe5,0xf1,0x71,0xd8,0x31,0x15,
         0x04,0xc7,0x23,0xc3,0x18,0x96,0x05,0x9a,0x07,0x12,0x80,0xe2,0xeb,0x27,0xb2,0x75,
@@ -67,16 +81,12 @@ class SimpleBlockCipher:public Ciphers{
         key=k;
         geninv();
     }
-    void setKey(int num){
-        key=num;
-    }
+    void setKey(int num){key=num;}
     void geninv(){
     for(int i=0;i<256;i++){
     invsBox[sBox[i]] = i;
-    }
-    }
-    void encrypt() override{
-        //block formation:
+    } }
+    void blockformation(){
         int s=holder.size();
         int groups=(s+16-1)/16;
         for(int i=0;i<groups;i++){
@@ -88,6 +98,18 @@ class SimpleBlockCipher:public Ciphers{
             }
             blocks.push_back(block); 
         }
+    }
+    void Xor_SBC(){
+                for(int i=0;i<blocks.size();i++){
+        for(int j=0;j<blocks[i].size();j++){
+            blocks[i][j]^=key;
+        }
+        }
+    }
+    void encrypt() override{
+        //block formation:
+        blocks.clear();
+        blockformation();
         //substitution
         for(int i=0;i<blocks.size();i++){
         for(int j=0;j<blocks[i].size();j++){
@@ -96,7 +118,7 @@ class SimpleBlockCipher:public Ciphers{
         //shift the last to front 
         for(auto& block:blocks){
         if(block.size()==16){
-            int last=block[15];
+            unsigned char last=block[15];
             block.pop_back();
             for(int i=15;i>0;i--){
                 block[i]=block[i-1];
@@ -105,26 +127,17 @@ class SimpleBlockCipher:public Ciphers{
             }
         }
         //Xor with key
-        for(int i=0;i<blocks.size();i++){
-        for(int j=0;j<blocks[i].size();j++){
-            blocks[i][j]^=key;
-        }
-        }
+        Xor_SBC();
         //combine back in a file
         int p=0;
-        for(auto& block:blocks){
+        for(auto& block:blocks){ //auto means figure out the data type yourself
         for(auto& i:block){
-        holder[p++]=i;
+        holder[p++]=i; //overwriting holder
         }
         }
-        ofstream outfile("EncryptedVer.bin", ios::binary);
-        outfile.write(holder.data(), holder.size());
-        outfile.close();
-        cout<<"Encrypted file saved as EncryptedVer.bin"<<endl;
-        }
-
+    }
         void decrypt() override{
-        ifstream infile("EncryptedVer.bin", ios::binary);
+        ifstream infile("EncryptedVer.enc", ios::binary);
         if(!infile.is_open()){
             cout<<"Error: cannot open encrypted file"<<endl;
         return;
@@ -135,25 +148,11 @@ class SimpleBlockCipher:public Ciphers{
         holder.resize(size);
         infile.read(holder.data(), size);
         infile.close(); 
+       //forming blocks again
         blocks.clear();
-        int s=holder.size();
-        int groups=(s+16-1)/16;
-        for(int i=0;i<groups;i++){
-            vector<unsigned char> block;
-            int start=i*16;
-            int end=min(16+start,(int)holder.size());
-            for(int j=start;j<end;j++){
-                block.push_back(holder[j]);
-            }
-            blocks.push_back(block); 
-        }
-
+        blockformation();
         //xor back
-        for(int i=0;i<blocks.size();i++){
-        for(int j=0;j<blocks[i].size();j++){
-        blocks[i][j]^=key;
-        }
-        }
+        Xor_SBC();
         //shift back the last element that we moved to front
         for(auto& block:blocks){
         if(block.size()==16){
@@ -162,29 +161,28 @@ class SimpleBlockCipher:public Ciphers{
         block[i]=block[i+1];
         }
         block[15]=first;
-        }
-        }
+        }}
         //substitute back oms
         for(int i=0;i<blocks.size();i++){
         for(int j=0;j<blocks[i].size();j++){
         blocks[i][j]=invsBox[(unsigned char)blocks[i][j]];
-        }
-        }
+        } }
         int po=0;
         for(auto& block:blocks){
         for(auto& i:block){
         holder[po++]=i;
-        }
-        }
-        ofstream outfile("DecryptedVer.bin", ios::binary);
-        outfile.write(holder.data(), holder.size());
-        outfile.close();
-        cout<<"Decrypted file saved as DecryptedVer.bin"<<endl;
-        }
+        }} }
 };
-
-class ROT13Cipher:public Ciphers{};
-
+class ByteReversalCipher:public Ciphers{
+public:
+    ByteReversalCipher(string n) : Ciphers(n) {}
+    void encrypt() override {
+        reverse(holder.begin(), holder.end());
+    }
+    void decrypt() override{    
+        reverse(holder.begin(), holder.end());  // Reverse back
+    }
+};
 class Vigenere:public Ciphers{
 string CipherText;
 string OriginalText;
@@ -233,7 +231,7 @@ string OriginalText;
 class XORCipher : public Ciphers{
     string CipherText;
     string OriginalText;
-    int key;
+     int key;
 public:
  XORCipher(string T, int K)
 {
@@ -255,16 +253,14 @@ string encrypt() {
             char c = CipherText[i] ^ key;
             OriginalText += c;
         }
-
         return OriginalText;
-   
 }
     };
 int main(){
         int choice, c;
-    cout << "Choose Cipher :\n";
-    cout << "1. ";
-    cout << "2. ";
+    cout << "Choose any 3 Ciphers :\n";
+    cout << "1. Simple Block Cipher ";
+    cout << "2. Byte Reversal";
     cout << "3. Vigenere Cipher \n";
     cout << "4. XOR Cipher \n";
     cout << "Enter choice: ";
@@ -279,7 +275,6 @@ int main(){
 
             Vigenere v(text, key);
 
-  
             cout << "\nChoose : \n1. Encrypt\n2. Decrypt\n ";
             cin >> c;
 
@@ -299,17 +294,12 @@ int main(){
             getline(cin, text);
             cout << "\nEnter key : ";
             cin >> key;
-
             XORCipher xor(text, key);
-
             cout << "\nChoose :\n1. Encrypt\n2. Decrypt\n ";
             cin >>c;
-
             if(c == 1) {
-                
                 cout << "Encrypted version : " << xor.encrypt() << endl;
             } else if(c == 2) {
-              
                 cout << "Decrypted version : " << xor.decrypt() << endl;
             } else
                 cout << "Invalid input" << endl;
@@ -317,10 +307,3 @@ int main(){
         } }
     return 0;
 }
-
-
-
-
-
-
-
