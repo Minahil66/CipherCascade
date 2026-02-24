@@ -19,16 +19,14 @@ class Ciphers{
         ofstream outfile("EncryptedVer.enc", ios::binary);
         outfile.write(holder.data(), holder.size());
         outfile.close();
-        cout<<"Encrypted file saved as EncryptedVer.enc"<<endl;
+        cout<<"Encrypted file saved as EncryptedVer.enc"<<endl<<endl;
         }
     void saveDecrypted(){
         ofstream outfile("DecryptedVer", ios::binary);
         outfile.write(holder.data(), holder.size());
         outfile.close();
-        cout<<"Decrypted file saved as DecryptedVer"<<endl;
-
+        cout<<"Decrypted file saved as DecryptedVer"<<endl<<endl;
     }
-   // virtual void bruteforce()=0;
     Ciphers(string n):filename(n){ //enter name/path
         ifstream file(n, ios::binary);
         if(!file.is_open()){
@@ -76,15 +74,14 @@ public:
     reverse(holder.begin(), holder.end());  // Reverse back
     }
 };
-class Vigenere : public Ciphers {
+class VigenereCipher : public Ciphers {
     string key;
 public:
-    Vigenere(string n, string k) : Ciphers(n) {
+    VigenereCipher(string n, string k):Ciphers(n) {
     key = k;
     for (int i = 0; i < key.length(); i++)
     key[i] = toupper(key[i]);
     }
-
     void encrypt() override {
     for (int i = 0; i < holder.size(); i++) {
     char c = holder[i];
@@ -94,9 +91,7 @@ public:
     int tValue = upperC - 'A';
     int kValue = k - 'A';
     holder[i] = ((tValue + kValue) % 26) + 'A';
-    }
-    }
-    }
+    } } }
     void decrypt() override {
     for (int i = 0; i < holder.size(); i++) {
     char c = holder[i];
@@ -106,9 +101,7 @@ public:
     int cValue = upperC - 'A';
     int kValue = k - 'A';
     holder[i] = ((cValue - kValue + 26) % 26) + 'A';
-    }
-    }
-    }
+    } } }
 };
 class XORCipher : public Ciphers {
 private:
@@ -125,9 +118,108 @@ public:
     void decrypt() override {
     for (int i = 0; i < holder.size(); i++) {
     holder[i] = holder[i] ^ key;   // XOR reverses itself
-    }
-    }
-};
+    } } };
 int main(){
-    return 0;
-}
+cout << "\n";
+cout << "==================================\n";
+cout << "     C I P H E R   C A S C A D E    \n";
+cout << "==================================\n";
+cout << "   Vigenere    XOR    Byte Rev    \n";
+cout << "              Atbash              \n";
+cout << "           3-Step Chain              \n";
+cout << "==================================\n\n";
+int n=1;
+    int choice;
+    string file, key;
+    int s;
+    cout<<"Enter the path/file you want to encrypt/decrypt: "<<endl;
+    cin>>file;
+    cout<<"Do you want to encrypt the file or decrypt it?"<<endl;
+    cout<<"1. Encrypt"<<endl<<"2. Decrypt"<<endl;
+    cin>>s;
+    while(n<=3){
+    cout<<"Select "<<n<<" cipher:"<<endl;
+    cout<<"1.Vigenere Cipher"<<endl<<"2.Xor Cipher"<<endl<<"3.Byte Reversal Cipher"<<endl<<"4.Atbash Cipher"<<endl;
+    cin>>choice;
+
+    switch(choice){
+    case 1:{
+    cout<<"Enter string key: "<<endl;
+    cin>>key;
+    {
+    VigenereCipher v1(file, key);
+    if(s==1){
+    cout<<"Encrypting file through Vignere Cipher..."<<endl;
+    v1.encrypt();
+    v1.saveEncrypted();
+    file="EncryptedVer.enc";
+    }
+    else{
+    cout<<"Decrypting file through Vignere Cipher..."<<endl;
+    v1.decrypt();
+    v1.saveDecrypted();
+    file="DecryptedVer";
+    }
+    }
+    break;
+    }
+    case 2:{
+    int k;
+    cout<<"Enter string key: "<<endl;
+    cin>>k;
+    {
+    XORCipher x1(file,k);
+    if(s==1){
+    cout<<"Encrypting file through XOR Cipher..."<<endl;
+    x1.encrypt();
+    x1.saveEncrypted();
+    file="EncryptedVer.enc";
+    }
+    else{
+    cout<<"Decrypting file through XOR Cipher..."<<endl;
+    x1.decrypt();
+    x1.saveDecrypted();
+    file="DecryptedVer";
+    }
+    }
+    break;
+    }
+    case 3:{
+    {
+    ByteReversalCipher b1(file);
+    if(s==1){
+    cout<<"Encrypting file through Byte Reversal Cipher..."<<endl;
+    b1.encrypt();
+    b1.saveEncrypted();
+    file="EncryptedVer.enc";
+    }
+    else{
+    cout<<"Decrypting file through Byte Reversal Cipher..."<<endl; 
+    b1.decrypt();
+    b1.saveDecrypted();
+    file="DecryptedVer";
+      }
+      }
+    break;
+     }
+    case 4: {
+    {
+    AtbashCipher a1(file);
+    if(s==1){
+    cout<<"Encrypting file through Atbash Cipher..."<<endl;
+    a1.encrypt();
+    a1.saveEncrypted();
+    file="EncryptedVer.enc";
+    }
+    else{
+    cout<<"Decrypting file through Atbash Cipher..."<<endl;
+    a1.decrypt();
+    a1.saveDecrypted();
+    file="DecryptedVer";
+    } }
+    break;
+   }
+    default: {
+    cout<<"Error: incorrect selection;"<<endl;
+    break;
+    } } n++; } }
