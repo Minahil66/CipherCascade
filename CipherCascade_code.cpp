@@ -78,31 +78,51 @@ class VigenereCipher : public Ciphers {
     string key;
 public:
     VigenereCipher(string n, string k):Ciphers(n) {
-    key = k;
-    for (int i = 0; i < key.length(); i++)
-    key[i] = toupper(key[i]);
-    }
+    key = k; }
     void encrypt() override {
+        int keyIndex = 0;
+        
     for (int i = 0; i < holder.size(); i++) {
     char c = holder[i];
     if (isalpha(c)) {
-    char upperC = toupper(c);
-    char k = key[i % key.length()];
-    int tValue = upperC - 'A';
-    int kValue = k - 'A';
-    holder[i] = ((tValue + kValue) % 26) + 'A';
-    } } }
-    void decrypt() override {
+    char k = key[keyIndex % key.length()];
+    
+    int kValue = toupper(k) - 'A';
+    if (isupper(c)) {
+    int tValue = c - 'A';
+    holder[i] = ((tValue + kValue) % 26) + 'A'; //tottal alphabets = 26
+    }
+    else
+    { //lowercase
+    int tValue = c - 'a';
+    holder[i] = ((tValue + kValue) % 26) + 'a';
+    } 
+    keyIndex++;  //increment key index
+    }
+}
+}
+    void decrypt() override 
+    {
+        int keyIndex = 0;
     for (int i = 0; i < holder.size(); i++) {
     char c = holder[i];
+    
     if (isalpha(c)) {
-    char upperC = toupper(c);
-    char k = key[i % key.length()];
-    int cValue = upperC - 'A';
-    int kValue = k - 'A';
-    holder[i] = ((cValue - kValue + 26) % 26) + 'A';
-    } } }
-};
+
+    char k = key[keyIndex % key.length()]; //to repeat key until length matches as of text
+ 
+    int kValue = toupper(k) - 'A';
+    if (isupper(c)) {
+        int cValue = c - 'A';
+        holder[i] = ((cValue - kValue + 26) % 26) + 'A';
+     }
+     else { // lowercase
+        int cValue = c - 'a';
+        holder[i] = ((cValue - kValue + 26) % 26) + 'a';
+                }
+        keyIndex++;        
+    } } } };
+    
 class XORCipher : public Ciphers {
 private:
     int key;
@@ -165,7 +185,7 @@ int n=1;
     }
     case 2:{
     int k;
-    cout<<"Enter string key: "<<endl;
+    cout<<"Enter integer key: "<<endl;
     cin>>k;
     {
     XORCipher x1(file,k);
@@ -223,3 +243,4 @@ int n=1;
     cout<<"Error: incorrect selection;"<<endl;
     break;
     } } n++; } }
+
