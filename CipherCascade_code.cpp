@@ -16,22 +16,28 @@ class Ciphers{
     virtual void encrypt()=0;
     virtual void decrypt()=0;
     void saveEncrypted(){
-        ofstream outfile("EncryptedVer.enc", ios::binary);
+        string name;
+        cout<<"Save file as:(Enter name) "<<endl;
+        cin>>name;
+         ofstream outfile(name, ios::binary);
         outfile.write(holder.data(), holder.size());
         outfile.close();
-        cout<<"Encrypted file saved as EncryptedVer.enc"<<endl<<endl;
+        cout<<"File saved as: "<<name<<endl<<endl;
         }
     void saveDecrypted(){
+        string name;
+        cout<<"Save file as:(Enter name) "<<endl;
+        cin>>name;
         ofstream outfile("DecryptedVer", ios::binary);
         outfile.write(holder.data(), holder.size());
         outfile.close();
-        cout<<"Decrypted file saved as DecryptedVer"<<endl<<endl;
+        cout<<"File saved as: "<<name<<endl<<endl;
     }
     Ciphers(string n):filename(n){ //enter name/path
         ifstream file(n, ios::binary);
         if(!file.is_open()){
         cout<<"Error: File failed to open"<<n<<endl;
-        exit(1);
+        return;
         }
         file.seekg(0, ios::end); //put the cursor in the end of the file and DO NOT MOV any positions
         size=file.tellg(); //snce file is already in binary, tell us the size
@@ -39,7 +45,7 @@ class Ciphers{
         holder.resize(size); //changing the size of our vector
         if(file.fail()){
         cout << "Error: Failed to read file " << n << endl;
-        exit(1);
+        return;
         }
         file.read(holder.data(), size); //data() is a raw pointer to the place/mem where vector is storing elements, so file.read(where to put data (expects a pointer), how many bytes to read(int));
         file.close(); //close the file
@@ -139,24 +145,60 @@ public:
     for (int i = 0; i < holder.size(); i++) {
     holder[i] = holder[i] ^ key;   // XOR reverses itself
     } } };
+    class Stegonography{ //for the time being works only for .bmp files
+        string filename;
+        vector<char>imgdata;
+        public:
+        Stegonography(string n): filename(n){
+            ifstream infile(filename, ios::binary);
+            if(!infile.is_open()){
+            cout<<"File failed to open"<<endl;
+            return;
+            }
+            infile.seekg(0, ios::end);
+            imgdata.resize(infile.tellg());
+            infile.seekg(0, ios::beg);
+            if(infile.fail()){
+            cout<<"Failed to read data into memory"<<endl;
+            return;
+            }
+            infile.read(imgdata.data(), infile.tellg());
+            infile.close();
+            cout<<"Successfully read file data into memory"<<endl;
+        }
+        void hideMessage(){
+            string msg;
+            cout<<"Enter the message to hide: ";
+            cin.ignore();
+            getline(cin,msg);
+
+            vector<char> message(msg.begin(), msg.end()); 
+
+            if(message.size()>imgdata.size()-0x36){
+                cout<<"Message too long, exceeds image size"<<endl;
+                return;
+            }
+            for(int i=0;i<message.size(); i++){
+                imgdata[0x36+i]=message[i];
+            }
+            ofstream outfile("stego_" + filename, ios::binary);
+            outfile.write(imgdata.data(), imgdata.size());
+            outfile.close();
+            cout<<"Hidden in stego_"<<filename<<endl;
+        }
+        };         
 int main(){
-cout << "\n";
-cout << "==================================\n";
-cout << "     C I P H E R   C A S C A D E    \n";
-cout << "==================================\n";
-cout << "   Vigenere    XOR    Byte Rev    \n";
-cout << "              Atbash              \n";
-cout << "           3-Step Chain              \n";
-cout << "==================================\n\n";
+
 int n=1;
     int choice;
     string file, key;
     int s;
-    cout<<"Enter the path/file you want to encrypt/decrypt: "<<endl;
+    cout<<"Enter the path/file: "<<endl;
     cin>>file;
-    cout<<"Do you want to encrypt the file or decrypt it?"<<endl;
-    cout<<"1. Encrypt"<<endl<<"2. Decrypt"<<endl;
+    cout<<"SELECT:"<<endl;
+    cout<<"1. Encrypt"<<endl<<"2. Decrypt"<<endl<<"3.Stegonograph a BMP image"<<"4. Meta Data Manager"<<endl;
     cin>>s;
+    if (s==1 || s==2){
     while(n<=3){
     cout<<"Select "<<n<<" cipher:"<<endl;
     cout<<"1.Vigenere Cipher"<<endl<<"2.Xor Cipher"<<endl<<"3.Byte Reversal Cipher"<<endl<<"4.Atbash Cipher"<<endl;
@@ -172,7 +214,7 @@ int n=1;
     cout<<"Encrypting file through Vignere Cipher..."<<endl;
     v1.encrypt();
     v1.saveEncrypted();
-    file="EncryptedVer.enc";
+    file="EncryptedVer";
     }
     else{
     cout<<"Decrypting file through Vignere Cipher..."<<endl;
@@ -193,7 +235,7 @@ int n=1;
     cout<<"Encrypting file through XOR Cipher..."<<endl;
     x1.encrypt();
     x1.saveEncrypted();
-    file="EncryptedVer.enc";
+    file="EncryptedVer";
     }
     else{
     cout<<"Decrypting file through XOR Cipher..."<<endl;
@@ -211,7 +253,7 @@ int n=1;
     cout<<"Encrypting file through Byte Reversal Cipher..."<<endl;
     b1.encrypt();
     b1.saveEncrypted();
-    file="EncryptedVer.enc";
+    file="EncryptedVer";
     }
     else{
     cout<<"Decrypting file through Byte Reversal Cipher..."<<endl; 
@@ -229,7 +271,7 @@ int n=1;
     cout<<"Encrypting file through Atbash Cipher..."<<endl;
     a1.encrypt();
     a1.saveEncrypted();
-    file="EncryptedVer.enc";
+    file="EncryptedVer";
     }
     else{
     cout<<"Decrypting file through Atbash Cipher..."<<endl;
@@ -242,5 +284,8 @@ int n=1;
     default: {
     cout<<"Error: incorrect selection;"<<endl;
     break;
-    } } n++; } }
-
+    } } n++; } } 
+    else if(s==3){
+        
+    }
+}
