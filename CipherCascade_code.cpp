@@ -145,46 +145,57 @@ public:
     for (int i = 0; i < holder.size(); i++) {
     holder[i] = holder[i] ^ key;   // XOR reverses itself
     } } };
-    class Stegonography{ //for the time being works only for .bmp files
+    class Steganography{
         string filename;
+        int size;
         vector<char>imgdata;
         public:
-        Stegonography(string n): filename(n){
+        Steganography(string n): filename(n){
             ifstream infile(filename, ios::binary);
             if(!infile.is_open()){
             cout<<"File failed to open"<<endl;
             return;
             }
             infile.seekg(0, ios::end);
-            imgdata.resize(infile.tellg());
+            size=infile.tellg();
+            imgdata.resize(size);
             infile.seekg(0, ios::beg);
             if(infile.fail()){
-            cout<<"Failed to read data into memory"<<endl;
+            cout<<":Failed to read data into memory"<<endl;
             return;
             }
-            infile.read(imgdata.data(), infile.tellg());
+            infile.read(imgdata.data(), size);
             infile.close();
-            cout<<"Successfully read file data into memory"<<endl;
+            cout<<"Successfully read file into memory"<<endl;
         }
-        void hideMessage(){
+        void HideMessage(){
             string msg;
             cout<<"Enter the message to hide: ";
-            cin.ignore();
             getline(cin,msg);
 
             vector<char> message(msg.begin(), msg.end()); 
+            message.push_back('\0');
 
             if(message.size()>imgdata.size()-0x36){
-                cout<<"Message too long, exceeds image size"<<endl;
+                cout<<"Message too long: Exceeds image size"<<endl;
                 return;
             }
             for(int i=0;i<message.size(); i++){
                 imgdata[0x36+i]=message[i];
             }
-            ofstream outfile("stego_" + filename, ios::binary);
+            ofstream outfile("stega_" + filename, ios::binary);
             outfile.write(imgdata.data(), imgdata.size());
             outfile.close();
-            cout<<"Hidden in stego_"<<filename<<endl;
+            cout<<"Hidden in stega_"<<filename<<endl;
+        }
+        void ExtractMessage(){
+            vector<char> msg;
+            for(int i=0x36;i<=imgdata.size();i++){
+                if(imgdata[i] == '\0') break;
+                msg.push_back(imgdata[i]);
+            }
+            string message(msg.begin(), msg.end());
+            cout << "Hidden message: " << message << endl;
         }
         };         
 int main(){
@@ -193,10 +204,11 @@ int n=1;
     int choice;
     string file, key;
     int s;
-    cout<<"Enter the path/file: "<<endl;
+    cout<<"Enter the path/file: ";
     cin>>file;
+    do{
     cout<<"SELECT:"<<endl;
-    cout<<"1. Encrypt"<<endl<<"2. Decrypt"<<endl<<"3.Stegonograph a BMP image"<<"4. Meta Data Manager"<<endl;
+    cout<<"1. Encrypt"<<endl<<"2. Decrypt"<<endl<<"3. Stegonograph a BMP image"<<endl<<"4. Encryption Tracker"<<endl<<"5. Logger (check history)"<<endl<<"6. Exit"<<endl;
     cin>>s;
     if (s==1 || s==2){
     while(n<=3){
@@ -286,6 +298,21 @@ int n=1;
     break;
     } } n++; } } 
     else if(s==3){
-        
+    Steganography stego(file);
+    int c;
+    cout << "\n1. Hide message" << endl;
+    cout << "2. Extract message" << endl;
+    cout << "Choose: ";
+    cin >> c;
+    
+    if(c == 1) {
+        cin.ignore(1000, '\n');  // clear before calling HideMessage
+        stego.HideMessage();
+    } else if(c == 2) {
+        stego.ExtractMessage();  
     }
+} 
+    }
+while (s!=6); 
+    return 0;
 }
